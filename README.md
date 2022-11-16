@@ -72,7 +72,10 @@ This section should list any major frameworks/libraries used to bootstrap your p
 * [![Java][java.com]][Java-url]
 * [![Cmake][cmake.org]][Cmake-url]
 
-[qt-badge]: https://img.shields.io/static/v1?label=Qt/QML&message=6&color=brightgreen
+[qt-badge]: https://img.shields.io/badge/Qt6/QML-20232A?style=for-the-badge&logo=qt&logoColor=41cd52
+[objc-badge]: https://img.shields.io/badge/Objective-C-20232A?style=for-the-badge&logo=objectivec&logoColor=41cd52
+[java-badge]: https://img.shields.io/badge/Qt6/Java-20232A?style=for-the-badge&logo=java&logoColor=41cd52
+[cmake-badge]: https://img.shields.io/badge/Qt6/Cmake-20232A?style=for-the-badge&logo=cmake&logoColor=41cd52
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
