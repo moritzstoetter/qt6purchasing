@@ -65,11 +65,11 @@ Here's why:
 
 ### Built With
 
-[![Qt6][qt-badge]][qt-url]
-[![Cpp][cpp-badge]][cpp-url]
-[![Objective-C][objc-badge]][objc-url]
-[![Java][java-badge]][java-url]
-[![Cmake][cmake-badge]][cmake-url]
+[![Qt6][qt-badge]][qt-url]<br>
+[![Cpp][cpp-badge]][cpp-url]<br>
+[![Objective-C][objc-badge]][objc-url]<br>
+[![Java][java-badge]][java-url]<br>
+[![Cmake][cmake-badge]][cmake-url]<br>
 
 [qt-badge]: https://img.shields.io/badge/Qt/QML-6-20232A?style=for-the-badge&logo=qt&logoColor=41cd52
 [qt-url]: https://www.qt.io/product/qt6
@@ -93,7 +93,7 @@ To add In-App-Purchasing capabilities to your Qt6/QML project follow the steps b
 
 ### Prerequisites
 
-* Qt6/QML
+* Qt/QML 6 
 * Apple StoreKit
 * Android Billing Client
 
