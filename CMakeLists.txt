@@ -15,7 +15,7 @@ if(ANDROID)
         android/googleplaystoretransaction.cpp
     )
     set(PLATFORM_STORE_HEADERS
-        ${CMAKE_SOURCE_DIR}/../platform/android/src/com/climbsmart/crimptronic/GooglePlayBilling.java
+        src/com/climbsmart/crimptronic/GooglePlayBilling.java
         android/googleplaystorebackend.h
         android/googleplaystoreproduct.h
         android/googleplaystoretransaction.h
