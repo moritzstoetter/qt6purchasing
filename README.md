@@ -71,11 +71,9 @@
       </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
 
@@ -128,7 +126,7 @@ To add In-App-Purchasing capabilities to your Qt6/QML project follow the steps b
   git clone https://github.com/moritzstoetter/qt6purchasing.git
   ```
 2. Move 'android/GooglePlayBilling.java' to 'QT_ANDROID_PACKAGE_SOURCE_DIR/src/com/COMPANY_NAME/APP_NAME/GooglePlayBilling.java'
-  For more information on how to include custom Java-Code in your Android App see [https://doc.qt.io/qt-6/deployment-android.html](Deploying an Application on Android).
+  For more information on how to include custom Java-Code in your Android App see [Deploying an Application on Android](https://doc.qt.io/qt-6/deployment-android.html).
 3. Add the qt6purchasing Library to your Project. In your projects 'CMakeLists.txt' add the following:
    ```sh
    target_link_libraries(APP_NAME
@@ -137,33 +135,36 @@ To add In-App-Purchasing capabilities to your Qt6/QML project follow the steps b
         store
     )
     ```
-4. Expose the purchasing classes to QML. In your `main.cpp` include the following lines: 
+4. Expose the purchasing classes to QML. In your `main.cpp` include the following lines:
   ```sh
+  #if defined Q_OS_ANDROID
+  #include <QJniObject>
+  #include <QCoreApplication>
+  #include "backend/store/android/googleplaystorebackend.h"
+  #include "backend/store/android/googleplaystoreproduct.h"
+  #include "backend/store/android/googleplaystoretransaction.h"
+  #endif
+
+  #if defined Q_OS_DARWIN
+  #include "backend/store/apple/appleappstorebackend.h"
+  #include "backend/store/apple/appleappstoreproduct.h"
+  #include "backend/store/apple/appleappstoretransaction.h"
+  #endif
+
+  ...
+
   qmlRegisterUncreatableType<AbstractStoreBackend>("AbstractStoreBackend",1,0,"AbstractStoreBackend","AbstractProduct uncreatable");
-    qmlRegisterUncreatableType<AbstractProduct>("AbstractProduct",1,0,"AbstractProduct","AbstractProduct uncreatable");
-    qmlRegisterUncreatableType<AbstractTransaction>("AbstractTransaction",1,0,"AbstractTransaction","AbstractTransaction uncreatable");
+  qmlRegisterUncreatableType<AbstractProduct>("AbstractProduct",1,0,"AbstractProduct","AbstractProduct uncreatable");
+  qmlRegisterUncreatableType<AbstractTransaction>("AbstractTransaction",1,0,"AbstractTransaction","AbstractTransaction uncreatable");
 #if defined Q_OS_ANDROID
-    qmlRegisterType<GooglePlayStoreBackend>("Store", 1, 0, "Store");
-    qmlRegisterType<GooglePlayStoreProduct>("Product", 1, 0, "Product");
+  qmlRegisterType<GooglePlayStoreBackend>("Store", 1, 0, "Store");
+  qmlRegisterType<GooglePlayStoreProduct>("Product", 1, 0, "Product");
 #elif defined Q_OS_DARWIN
-    qmlRegisterType<AppleAppStoreBackend>("Store", 1, 0, "Store");
-    qmlRegisterType<AppleAppStoreProduct>("Product", 1, 0, "Product");
+  qmlRegisterType<AppleAppStoreBackend>("Store", 1, 0, "Store");
+  qmlRegisterType<AppleAppStoreProduct>("Product", 1, 0, "Product");
 #endif
   ```
 
-1. Get a free API Key at [https://example.com](https://example.com)
-2. Clone the repo
-   ```sh
-   git clone https://github.com/your_username_/Project-Name.git
-   ```
-3. Install NPM packages
-   ```sh
-   npm install
-   ```
-4. Enter your API in `config.js`
-   ```js
-   const API_KEY = 'ENTER YOUR API';
-   ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -172,35 +173,83 @@ To add In-App-Purchasing capabilities to your Qt6/QML project follow the steps b
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
+1. In your QML file include the purchasing classes:
+  ```sh
+  import Store
+  import Product  
+  ```
+2. Use it like this, for a product that is called "test_1" in the app store(s):
+  ```sh
+  Store {
+    id: iapStore
+    Product {
+      id: testingProduct
+      identifier: "test_1"
+      type: Product.Consumable
+    }
+  }
 
-_For more examples, please refer to the [Documentation](https://example.com)_
+  StoreItem {
+    id: testingStoreItem
+    product: testingProduct
+
+    onIapCompleted: root.accepted()
+  }
+  ```
+  'StoreItem.qml':
+  ```sh
+  import QtQuick
+  import Product
+
+  Item {
+    id: root
+    required property Product product
+
+    signal iapCompleted
+
+    enum PurchasingStatus {
+        NoPurchase,
+        PurchaseProcessing,
+        PurchaseSuccess,
+        PurchaseFail
+    }
+    property int purchasingStatus: StoreItem.PurchasingStatus.NoPurchase
+
+    function purchase() {
+        purchasingStatus = StoreItem.PurchasingStatus.PurchaseProcessing
+        product.purchase()
+    }
+
+    function finalize(transaction) {
+        purchasingStatus = StoreItem.PurchasingStatus.PurchaseSuccess
+        transaction.finalize()
+    }
+
+    Connections {
+        target: product
+        function onPurchaseSucceeded(transaction) {
+            finalize(transaction)
+        }
+        function onPurchaseRestored(transaction) {
+            finalize(transaction)
+        }
+        function onPurchaseFailed(transaction) {
+            purchasingStatus = StoreItem.PurchasingStatus.PurchaseFail
+        }
+        function onPurchaseConsumed(transaction) {
+            root.iapCompleted()
+        }
+    }
+  }
+  ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- ROADMAP -->
-## Roadmap
-
-- [x] Add Changelog
-- [x] Add back to top links
-- [ ] Add Additional Templates w/ Examples
-- [ ] Add "components" document to easily copy & paste sections of the readme
-- [ ] Multi-language Support
-    - [ ] Chinese
-    - [ ] Spanish
-
-See the [open issues](https://github.com/othneildrew/Best-README-Template/issues) for a full list of proposed features (and known issues).
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 
 
 <!-- CONTRIBUTING -->
 ## Contributing
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+Any contributions you make are **greatly appreciated**.
 
 If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
 Don't forget to give the project a star! Thanks again!
@@ -227,29 +276,11 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 <!-- CONTACT -->
 ## Contact
 
-Your Name - [@your_twitter](https://twitter.com/your_username) - email@example.com
+Moritz Stötter - [@your_twitter](https://www.moritzstoetter.dev) - hi@moritzstoetter.dev
 
-Project Link: [https://github.com/your_username/repo_name](https://github.com/your_username/repo_name)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
-<!-- ACKNOWLEDGMENTS -->
-## Acknowledgments
-
-Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
-
-* [Choose an Open Source License](https://choosealicense.com)
-* [GitHub Emoji Cheat Sheet](https://www.webpagefx.com/tools/emoji-cheat-sheet)
-* [Malven's Flexbox Cheatsheet](https://flexbox.malven.co/)
-* [Malven's Grid Cheatsheet](https://grid.malven.co/)
-* [Img Shields](https://shields.io)
-* [GitHub Pages](https://pages.github.com)
-* [Font Awesome](https://fontawesome.com)
-* [React Icons](https://react-icons.github.io/react-icons/search)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
