@@ -68,9 +68,9 @@ Here's why:
 This section should list any major frameworks/libraries used to bootstrap your project. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
 
 * [![Qt6][qt-badge]][https://www.qt.io/product/qt6]
-* [![Objective-C][Objective-C]][Objective-C-url]
-* [![Java][java.com]][Java-url]
-* [![Cmake][cmake.org]][Cmake-url]
+* [![Objective-C][objc-badge]][Objective-C-url]
+* [![Java][java-badge]][https://java.com]
+* [![Cmake][cmake-badge]][https://cmake.com]
 
 [qt-badge]: https://img.shields.io/badge/Qt6/QML-20232A?style=for-the-badge&logo=qt&logoColor=41cd52
 [objc-badge]: https://img.shields.io/badge/Objective-C-20232A?style=for-the-badge&logo=objectivec&logoColor=41cd52
