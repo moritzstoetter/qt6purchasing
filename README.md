@@ -201,7 +201,24 @@ To add In-App-Purchasing capabilities to your Qt6/QML project follow the steps b
     function finalize(transaction) {
         purchasingStatus = StoreItem.PurchasingStatus.PurchaseSuccess
         transaction.finalize()
+      restoreFailedTimerId.stop();
     }
+
+    function restore() {
+      if(!restoreFailedTimerId.running) {
+          purchasingStatus = StoreItem.PurchasingStatus.PurchaseProcessing
+          restoreFailedTimerId.start()
+          product.restore()
+      }
+    }
+
+  Timer {
+      id: restoreFailedTimerId
+      interval: 10000
+      onTriggered: {
+          purchasingStatus = StoreItem.PurchasingStatus.PurchaseFail
+      }
+  }
 
     Connections {
         target: product
