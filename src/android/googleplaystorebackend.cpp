@@ -1,5 +1,4 @@
 #include "googleplaystorebackend.h"
-#include "globaldef.h"
 #include "googleplaystoreproduct.h"
 #include "googleplaystoretransaction.h"
 
@@ -38,12 +37,12 @@ GooglePlayStoreBackend::GooglePlayStoreBackend(QObject * parent) : AbstractStore
 
 /*static*/ void GooglePlayStoreBackend::debugMessage(JNIEnv * env, jobject object, jstring message)
 {
-    qCDebug(Logging::store) << env->GetStringUTFChars(message, nullptr);
+    qDebug() << env->GetStringUTFChars(message, nullptr);
 }
 
 /*static*/ void GooglePlayStoreBackend::billingResponseReceived(JNIEnv * env, jobject object, jint value)
 {
-    qCDebug(Logging::store) << "Billing response received:" << static_cast<GooglePlayStoreBackend::BillingResponseCode>(value);
+    qDebug() << "Billing response received:" << static_cast<GooglePlayStoreBackend::BillingResponseCode>(value);
 }
 
 /*static*/ void GooglePlayStoreBackend::connectedChangedHelper(JNIEnv * env, jobject object, jboolean connected)
@@ -80,7 +79,7 @@ void GooglePlayStoreBackend::registerProduct(AbstractProduct * product)
 
         emit GooglePlayStoreBackend::instance()->productRegistered(product);
     } else {
-        qCCritical(Logging::store) << "Registered a product that's not in the list of products. This is not handled.";
+        qCritical() << "Registered a product that's not in the list of products. This is not handled.";
     }
 }
 

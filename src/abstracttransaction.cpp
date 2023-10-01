@@ -1,5 +1,4 @@
 #include "abstracttransaction.h"
-#include "globaldef.h"
 #include "abstractstorebackend.h"
 #include <QJsonObject>
 
@@ -18,6 +17,6 @@ void AbstractTransaction::finalize()
     if (!_store)
         return;
 
-    qCDebug(Logging::store) << "Transaction: Finalizing purchase" << this->_orderId;
+    qDebug() << "Transaction: Finalizing purchase" << this->_orderId;
     _store->consumePurchase(this);
 }

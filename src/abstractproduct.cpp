@@ -1,5 +1,4 @@
 #include "abstractproduct.h"
-#include "globaldef.h"
 #include "abstracttransaction.h"
 
 AbstractProduct::AbstractProduct(QObject * parent) : QObject(parent)
@@ -41,24 +40,24 @@ void AbstractProduct::setTitle(const QString &value)
 void AbstractProduct::setStatus(ProductStatus status)
 {
     _status = status;
-    qCDebug(Logging::store) << "Product" << _identifier << _status;
+    qDebug() << "Product" << _identifier << _status;
     emit statusChanged();
 }
 
 void AbstractProduct::registerInStore()
 {
     if (!AbstractStoreBackend::instance()) {
-        qCCritical(Logging::store) << "Store unavailable!";
+        qCritical() << "Store unavailable!";
         return;
     }
 
     if(!AbstractStoreBackend::instance()->isConnected()) {
-        qCCritical(Logging::store) << "No connection to store!";
+        qCritical() << "No connection to store!";
         return;
     }
 
     if (_identifier.isEmpty()) {
-        qCCritical(Logging::store) << "Product has no id!";
+        qCritical() << "Product has no id!";
         return;
     }
 
@@ -70,22 +69,22 @@ void AbstractProduct::registerInStore()
 void AbstractProduct::purchase()
 {
     if (!AbstractStoreBackend::instance()) {
-        qCCritical(Logging::store) << "Store unavailable!";
+        qCritical() << "Store unavailable!";
         return;
     }
 
     if(!AbstractStoreBackend::instance()->isConnected()) {
-        qCCritical(Logging::store) << "No connection to store!";
+        qCritical() << "No connection to store!";
         return;
     }
 
     if (_identifier.isEmpty()) {
-        qCCritical(Logging::store) << "Product has no id!";
+        qCritical() << "Product has no id!";
         return;
     }
 
     if (_status != AbstractProduct::Registered) {
-        qCDebug(Logging::store) << "Trying to purchase an unregistered Product. Aborting";
+        qDebug() << "Trying to purchase an unregistered Product. Aborting";
         return;
     }
 
