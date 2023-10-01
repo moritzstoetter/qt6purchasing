@@ -43,7 +43,8 @@ public:
     void registerProduct(AbstractProduct * product) override;
     void purchaseProduct(AbstractProduct * product) override;
     void consumePurchase(AbstractTransaction * transaction) override;
-
+    void restorePurchases(AbstractProduct* product) override;
+    
 private:
     QJniObject * _googlePlayBillingJavaClass = nullptr;
 };

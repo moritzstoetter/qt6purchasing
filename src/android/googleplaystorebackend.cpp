@@ -106,6 +106,11 @@ void GooglePlayStoreBackend::consumePurchase(AbstractTransaction * transaction)
     );
 }
 
+void GooglePlayStoreBackend::restorePurchases(AbstractProduct *product)
+{
+    //TODO
+}
+
 /*static*/ void GooglePlayStoreBackend::purchaseSucceeded(JNIEnv *env, jobject object, jstring message)
 {
     QJsonObject json = QJsonDocument::fromJson(env->GetStringUTFChars(message, nullptr)).object();

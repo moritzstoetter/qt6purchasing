@@ -144,6 +144,11 @@ void AppleAppStoreBackend::consumePurchase(AbstractTransaction * transaction)
     emit purchaseConsumed(transaction);
 }
 
+void AppleAppStoreBackend::restorePurchases(AbstractProduct *product)
+{
+    [[SKPaymentQueue defaultQueue] restoreCompletedTransactions];
+}
+
 AppleAppStoreBackend::~AppleAppStoreBackend()
 {
     [_iapManager release];

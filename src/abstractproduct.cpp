@@ -90,3 +90,9 @@ void AbstractProduct::purchase()
 
     AbstractStoreBackend::instance()->purchaseProduct(this);
 }
+
+void AbstractProduct::restore()
+{
+    AbstractStoreBackend::instance()->restorePurchases(this);
+}
+
