@@ -49,6 +49,7 @@ public:
     void registerInStore();
 
     Q_INVOKABLE void purchase();
+    Q_INVOKABLE void restore();
 
 protected:
     explicit AbstractProduct(QObject * parent = nullptr);

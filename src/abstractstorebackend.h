@@ -25,6 +25,7 @@ public:
     virtual void registerProduct(AbstractProduct * product) = 0;
     virtual void purchaseProduct(AbstractProduct * product) = 0;
     virtual void consumePurchase(AbstractTransaction * transaction) = 0;
+    virtual void restorePurchases(AbstractProduct* product) = 0;
 
 protected:
     explicit AbstractStoreBackend(QObject * parent = nullptr);

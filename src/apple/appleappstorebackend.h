@@ -17,6 +17,7 @@ public:
     void registerProduct(AbstractProduct * product) override;
     void purchaseProduct(AbstractProduct * product) override;
     void consumePurchase(AbstractTransaction * transaction) override;
+    void restorePurchases(AbstractProduct* product) override;
 
 //    void emitProductRegistered(AbstractProduct * product);
 private:
