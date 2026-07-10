@@ -22,10 +22,10 @@ AbstractStoreBackend::AbstractStoreBackend(QObject * parent) : QObject(parent)
             qDebug() << "Disconnected from store";
         }
     });
-    connect(this, &AbstractStoreBackend::productRegistered, [](AbstractProduct * product){
+    connect(this, &AbstractStoreBackend::productRegistered, [](AbstractProduct * product) {
         qDebug() << "Product registered:" << product->identifier();
     });
-    connect(this, &AbstractStoreBackend::purchaseSucceeded, [this](AbstractTransaction * transaction){
+    connect(this, &AbstractStoreBackend::purchaseSucceeded, [this](AbstractTransaction * transaction) {
         qDebug() << "purchaseSucceeded:" << transaction->orderId();
 
         AbstractProduct * ap = product(transaction->productId());
@@ -35,7 +35,7 @@ AbstractStoreBackend::AbstractStoreBackend(QObject * parent) : QObject(parent)
             qCritical() << "Failed to map successful purchase to a product!";
         }
     });
-    connect(this, &AbstractStoreBackend::purchaseRestored, [this](AbstractTransaction * transaction){
+    connect(this, &AbstractStoreBackend::purchaseRestored, [this](AbstractTransaction * transaction) {
         qDebug() << "purchaseRestored:" << transaction->orderId();
 
         AbstractProduct * ap = product(transaction->productId());
@@ -45,10 +45,10 @@ AbstractStoreBackend::AbstractStoreBackend(QObject * parent) : QObject(parent)
             qCritical() << "Failed to map restored purchase to a product!";
         }
     });
-    connect(this, &AbstractStoreBackend::purchaseFailed, [](int code){
+    connect(this, &AbstractStoreBackend::purchaseFailed, [](int code) {
         qDebug() << "purchaseFailed:" << code;
     });
-    connect(this, &AbstractStoreBackend::purchaseConsumed, [this](AbstractTransaction * transaction){
+    connect(this, &AbstractStoreBackend::purchaseConsumed, [this](AbstractTransaction * transaction) {
         qDebug() << "purchaseConsumed:" << transaction->orderId();
 
         AbstractProduct * ap = product(transaction->productId());

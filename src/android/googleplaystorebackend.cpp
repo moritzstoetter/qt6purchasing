@@ -27,9 +27,7 @@ GooglePlayStoreBackend::GooglePlayStoreBackend(QObject * parent) : AbstractStore
     };
     QJniEnvironment env;
     jclass objectClass = env->GetObjectClass(_googlePlayBillingJavaClass->object<jobject>());
-    env->RegisterNatives(objectClass,
-                         methods,
-                         sizeof(methods) / sizeof(methods[0]));
+    env->RegisterNatives(objectClass, methods, sizeof(methods) / sizeof(methods[0]));
     env->DeleteLocalRef(objectClass);
 
     this->startConnection();
@@ -58,9 +56,7 @@ void GooglePlayStoreBackend::startConnection()
 void GooglePlayStoreBackend::registerProduct(AbstractProduct * product)
 {
     _googlePlayBillingJavaClass->callMethod<void>(
-        "registerProduct",
-        "(Ljava/lang/String;)V",
-        QJniObject::fromString( product->identifier() ).object<jstring>()
+        "registerProduct", "(Ljava/lang/String;)V", QJniObject::fromString(product->identifier()).object<jstring>()
     );
 }
 
@@ -68,7 +64,9 @@ void GooglePlayStoreBackend::registerProduct(AbstractProduct * product)
 {
     QJsonObject json = QJsonDocument::fromJson(env->GetStringUTFChars(message, nullptr)).object();
 
-    GooglePlayStoreProduct * product = reinterpret_cast<GooglePlayStoreProduct *>(AbstractStoreBackend::instance()->product( json["productId"].toString() ));
+    GooglePlayStoreProduct * product = reinterpret_cast<GooglePlayStoreProduct *>(
+        AbstractStoreBackend::instance()->product(json["productId"].toString())
+    );
 
     if (product) {
         product->setJson(json);
@@ -85,7 +83,7 @@ void GooglePlayStoreBackend::registerProduct(AbstractProduct * product)
 
 void GooglePlayStoreBackend::purchaseProduct(AbstractProduct * product)
 {
-    QByteArray jsonSkuDetails = QJsonDocument(reinterpret_cast<GooglePlayStoreProduct*>(product)->json()).toJson();
+    QByteArray jsonSkuDetails = QJsonDocument(reinterpret_cast<GooglePlayStoreProduct *>(product)->json()).toJson();
 
     _googlePlayBillingJavaClass->callMethod<void>(
         "purchaseProduct",
@@ -106,7 +104,7 @@ void GooglePlayStoreBackend::consumePurchase(AbstractTransaction * transaction)
     );
 }
 
-/*static*/ void GooglePlayStoreBackend::purchaseSucceeded(JNIEnv *env, jobject object, jstring message)
+/*static*/ void GooglePlayStoreBackend::purchaseSucceeded(JNIEnv * env, jobject object, jstring message)
 {
     QJsonObject json = QJsonDocument::fromJson(env->GetStringUTFChars(message, nullptr)).object();
 
@@ -114,7 +112,7 @@ void GooglePlayStoreBackend::consumePurchase(AbstractTransaction * transaction)
     emit GooglePlayStoreBackend::instance()->purchaseSucceeded(transaction);
 }
 
-/*static*/ void GooglePlayStoreBackend::purchaseRestored(JNIEnv *env, jobject object, jstring message)
+/*static*/ void GooglePlayStoreBackend::purchaseRestored(JNIEnv * env, jobject object, jstring message)
 {
     QJsonObject json = QJsonDocument::fromJson(env->GetStringUTFChars(message, nullptr)).object();
 
@@ -122,16 +120,15 @@ void GooglePlayStoreBackend::consumePurchase(AbstractTransaction * transaction)
     emit GooglePlayStoreBackend::instance()->purchaseRestored(transaction);
 }
 
-/*static*/ void GooglePlayStoreBackend::purchaseFailed(JNIEnv *env, jobject object, jint billingResponseCode)
+/*static*/ void GooglePlayStoreBackend::purchaseFailed(JNIEnv * env, jobject object, jint billingResponseCode)
 {
     emit GooglePlayStoreBackend::instance()->purchaseFailed(billingResponseCode);
 }
 
-/*static*/ void GooglePlayStoreBackend::purchaseConsumed(JNIEnv *env, jobject object, jstring message)
+/*static*/ void GooglePlayStoreBackend::purchaseConsumed(JNIEnv * env, jobject object, jstring message)
 {
     QJsonObject json = QJsonDocument::fromJson(env->GetStringUTFChars(message, nullptr)).object();
 
     GooglePlayStoreTransaction * transaction = new GooglePlayStoreTransaction(AbstractStoreBackend::instance(), json);
     emit GooglePlayStoreBackend::instance()->purchaseConsumed(transaction);
 }
-

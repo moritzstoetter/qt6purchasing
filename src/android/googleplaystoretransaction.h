@@ -14,7 +14,6 @@ public:
 
 private:
     QJsonObject _json;
-
 };
 
 #endif // GOOGLEPLAYSTORETRANSACTION_H

@@ -10,16 +10,17 @@
 @interface QT_MANGLE_NAMESPACE(InAppPurchaseManager) : NSObject <SKProductsRequestDelegate, SKPaymentTransactionObserver>
 {
     AppleAppStoreBackend * backend;
-    NSMutableArray<SKPaymentTransaction *> *pendingTransactions;
+    NSMutableArray<SKPaymentTransaction *> * pendingTransactions;
 }
 
--(void)requestProductData:(NSString *)identifier;
+- (void)requestProductData:(NSString *)identifier;
 
 @end
 
 @implementation QT_MANGLE_NAMESPACE(InAppPurchaseManager)
 
--(id)initWithBackend:(AppleAppStoreBackend *)iapBackend {
+- (id)initWithBackend:(AppleAppStoreBackend *)iapBackend
+{
     if (self = [super init]) {
         backend = iapBackend;
         pendingTransactions = [[NSMutableArray<SKPaymentTransaction *> alloc] init];
@@ -28,14 +29,14 @@
     return self;
 }
 
--(void)dealloc
+- (void)dealloc
 {
     [[SKPaymentQueue defaultQueue] removeTransactionObserver:self];
     [pendingTransactions release];
     [super dealloc];
 }
 
--(void)requestProductData:(NSString *)identifier
+- (void)requestProductData:(NSString *)identifier
 {
     NSSet<NSString *> * productId = [NSSet<NSString *> setWithObject:identifier];
     SKProductsRequest * productsRequest = [[SKProductsRequest alloc] initWithProductIdentifiers:productId];
@@ -44,7 +45,7 @@
 }
 
 //SKProductsRequestDelegate
--(void)productsRequest:(SKProductsRequest *)request didReceiveResponse:(SKProductsResponse *)response
+- (void)productsRequest:(SKProductsRequest *)request didReceiveResponse:(SKProductsResponse *)response
 {
     NSArray<SKProduct *> * skProducts = response.products;
     SKProduct * skProduct = [skProducts count] == 1 ? [[skProducts firstObject] retain] : nil;
@@ -56,11 +57,13 @@
             backend->product(QString::fromNSString(invalidId))->setStatus(AbstractProduct::Unknown);
     } else {
         //Valid product query
-        AppleAppStoreProduct * product = reinterpret_cast<AppleAppStoreProduct*>( backend->product(QString::fromNSString(skProduct.productIdentifier)) );
+        AppleAppStoreProduct * product = reinterpret_cast<AppleAppStoreProduct *>(
+            backend->product(QString::fromNSString(skProduct.productIdentifier))
+        );
 
         if (product) {
             // formatting price string
-            NSNumberFormatter *numberFormatter = [[NSNumberFormatter alloc] init];
+            NSNumberFormatter * numberFormatter = [[NSNumberFormatter alloc] init];
             [numberFormatter setFormatterBehavior:NSNumberFormatterBehavior10_4];
             [numberFormatter setNumberStyle:NSNumberFormatterCurrencyStyle];
             [numberFormatter setLocale:skProduct.priceLocale];
@@ -73,12 +76,14 @@
             product->setTitle(QString::fromNSString(skProduct.localizedTitle));
             product->setStatus(AbstractProduct::Registered);
 
-            QMetaObject::invokeMethod(backend, "productRegistered", Qt::AutoConnection, Q_ARG(AbstractProduct*, product));
+            QMetaObject::invokeMethod(
+                backend, "productRegistered", Qt::AutoConnection, Q_ARG(AbstractProduct *, product)
+            );
         } else {
         }
     }
 
-//    [skProduct release];
+    //    [skProduct release];
     [request release];
 }
 
@@ -94,13 +99,19 @@
             //unhandled
             break;
         case AppleAppStoreTransaction::Purchased:
-            QMetaObject::invokeMethod(backend, "purchaseSucceeded", Qt::AutoConnection, Q_ARG(AbstractTransaction*, ta));
+            QMetaObject::invokeMethod(
+                backend, "purchaseSucceeded", Qt::AutoConnection, Q_ARG(AbstractTransaction *, ta)
+            );
             break;
         case AppleAppStoreTransaction::Failed:
-            QMetaObject::invokeMethod(backend, "purchaseFailed", Qt::AutoConnection, Q_ARG(int, transaction.error.code));
+            QMetaObject::invokeMethod(
+                backend, "purchaseFailed", Qt::AutoConnection, Q_ARG(int, transaction.error.code)
+            );
             break;
         case AppleAppStoreTransaction::Restored:
-            QMetaObject::invokeMethod(backend, "purchaseRestored", Qt::AutoConnection, Q_ARG(AbstractTransaction*, ta));
+            QMetaObject::invokeMethod(
+                backend, "purchaseRestored", Qt::AutoConnection, Q_ARG(AbstractTransaction *, ta)
+            );
             break;
         case AppleAppStoreTransaction::Deferred:
             //unhandled
@@ -118,10 +129,7 @@ AppleAppStoreBackend::AppleAppStoreBackend(QObject * parent) : AbstractStoreBack
 
 void AppleAppStoreBackend::startConnection()
 {
-    _iapManager = [
-            [QT_MANGLE_NAMESPACE(InAppPurchaseManager) alloc]
-            initWithBackend:this
-    ];
+    _iapManager = [[QT_MANGLE_NAMESPACE(InAppPurchaseManager) alloc] initWithBackend:this];
     emit connectedChanged(true);
 }
 
@@ -132,7 +140,7 @@ void AppleAppStoreBackend::registerProduct(AbstractProduct * product)
 
 void AppleAppStoreBackend::purchaseProduct(AbstractProduct * product)
 {
-    SKProduct * skProduct = reinterpret_cast<AppleAppStoreProduct*>(product)->nativeProduct();
+    SKProduct * skProduct = reinterpret_cast<AppleAppStoreProduct *>(product)->nativeProduct();
 
     SKPayment * payment = [SKPayment paymentWithProduct:skProduct];
     [[SKPaymentQueue defaultQueue] addPayment:payment];
@@ -140,7 +148,8 @@ void AppleAppStoreBackend::purchaseProduct(AbstractProduct * product)
 
 void AppleAppStoreBackend::consumePurchase(AbstractTransaction * transaction)
 {
-    [[SKPaymentQueue defaultQueue] finishTransaction:reinterpret_cast<AppleAppStoreTransaction *>(transaction)->nativeTransaction()];
+    [[SKPaymentQueue defaultQueue]
+        finishTransaction:reinterpret_cast<AppleAppStoreTransaction *>(transaction)->nativeTransaction()];
     emit purchaseConsumed(transaction);
 }
 

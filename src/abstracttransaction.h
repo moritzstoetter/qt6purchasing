@@ -35,8 +35,6 @@ protected:
 
 signals:
     void statusChanged();
-
 };
 
 #endif // ABSTRACTTRANSACTION_H
-

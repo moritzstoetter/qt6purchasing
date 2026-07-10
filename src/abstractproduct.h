@@ -73,7 +73,6 @@ signals:
     void purchaseFailed(AbstractTransaction * transaction);
     void purchaseRestored(AbstractTransaction * transaction);
     void purchaseConsumed(AbstractTransaction * transaction);
-
 };
 
 #endif // ABSTRACTPRODUCT_H

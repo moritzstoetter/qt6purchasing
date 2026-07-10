@@ -2,7 +2,8 @@
 #include "abstractstorebackend.h"
 #include <QJsonObject>
 
-AbstractTransaction::AbstractTransaction(AbstractStoreBackend * store, QString orderId) : QObject(),
+AbstractTransaction::AbstractTransaction(AbstractStoreBackend * store, QString orderId) :
+    QObject(),
     _store(store),
     _orderId(orderId)
 {

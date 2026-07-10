@@ -51,7 +51,7 @@ void AbstractProduct::registerInStore()
         return;
     }
 
-    if(!AbstractStoreBackend::instance()->isConnected()) {
+    if (!AbstractStoreBackend::instance()->isConnected()) {
         qCritical() << "No connection to store!";
         return;
     }
@@ -65,7 +65,6 @@ void AbstractProduct::registerInStore()
     AbstractStoreBackend::instance()->registerProduct(this);
 }
 
-
 void AbstractProduct::purchase()
 {
     if (!AbstractStoreBackend::instance()) {
@@ -73,7 +72,7 @@ void AbstractProduct::purchase()
         return;
     }
 
-    if(!AbstractStoreBackend::instance()->isConnected()) {
+    if (!AbstractStoreBackend::instance()->isConnected()) {
         qCritical() << "No connection to store!";
         return;
     }
