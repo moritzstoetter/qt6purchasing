@@ -1,0 +1,31 @@
+name: lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  clang-format:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install clang-format
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format
+      - name: Check formatting
+        run: sh/clang_format_check.sh
+
+  clang-tidy:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install clang-tidy and Qt
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang clang-tidy clang-tools ninja-build qt6-base-dev qt6-declarative-dev
+      - name: Configure
+        run: cmake -S src -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      - name: Check identifier naming
+        run: sh/clang_tidy_check.sh
