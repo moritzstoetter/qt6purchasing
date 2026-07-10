@@ -5,26 +5,33 @@ on:
     branches: [main]
   pull_request:
 
+env:
+  LLVM_VERSION: 22
+
 jobs:
   clang-format:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v4
       - name: Install clang-format
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang-format
+          sudo apt-get install -y clang-format-${LLVM_VERSION}
+          sudo ln -sf "$(command -v clang-format-${LLVM_VERSION})" /usr/local/bin/clang-format
       - name: Check formatting
         run: sh/clang_format_check.sh
 
   clang-tidy:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v4
       - name: Install clang-tidy and Qt
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang clang-tidy clang-tools ninja-build qt6-base-dev qt6-declarative-dev
+          sudo apt-get install -y clang-${LLVM_VERSION} clang-tidy-${LLVM_VERSION} ninja-build qt6-base-dev qt6-declarative-dev
+          sudo ln -sf "$(command -v clang-tidy-${LLVM_VERSION})" /usr/local/bin/clang-tidy
+          sudo ln -sf "$(command -v run-clang-tidy-${LLVM_VERSION})" /usr/local/bin/run-clang-tidy
+          sudo ln -sf "$(command -v clang++-${LLVM_VERSION})" /usr/local/bin/clang++
       - name: Configure
         run: cmake -S src -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       - name: Check identifier naming
