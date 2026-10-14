@@ -34,7 +34,7 @@ GooglePlayStoreBackend::GooglePlayStoreBackend(QObject * parent) : AbstractStore
     _googlePlayBillingJavaClass = new QJniObject(
         "com/climbsmart/crimptronic/GooglePlayBilling",
         "(Landroid/content/Context;)V",
-        QNativeInterface::QAndroidApplication::context()
+        QNativeInterface::QAndroidApplication::context().object()
     );
 
     JNINativeMethod methods[] {
