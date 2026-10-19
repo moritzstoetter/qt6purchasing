@@ -32,18 +32,18 @@ public:
     explicit GooglePlayStoreBackend(QObject * parent = nullptr);
     ~GooglePlayStoreBackend();
 
-    static void debugMessage(JNIEnv * env, jobject object, jstring message);
-    static void billingResponseReceived(JNIEnv * env, jobject object, jint billingResponseCode);
-    static void connectedChangedHelper(JNIEnv * env, jobject object, jboolean connected);
-    static void productRegistered(JNIEnv * env, jobject object, jstring productJson);
-    static void productRegistrationFailed(JNIEnv * env, jobject object, jstring productId, jint billingResponseCode);
-    static void purchaseSucceeded(JNIEnv * env, jobject object, jstring purchaseJson);
-    static void purchasePending(JNIEnv * env, jobject object, jstring purchaseJson);
-    static void purchaseRestored(JNIEnv * env, jobject object, jstring purchaseJson);
-    static void purchaseFailed(JNIEnv * env, jobject object, jstring productId, jint billingResponseCode);
-    static void purchaseConsumed(JNIEnv * env, jobject object, jstring purchaseJson);
-    static void restorePurchasesSucceeded(JNIEnv * env, jobject object, jint count);
-    static void restorePurchasesFailed(JNIEnv * env, jobject object, jint billingResponseCode);
+    static void debugMessageJniCallback(JNIEnv * env, jobject object, jstring message);
+    static void billingResponseReceivedJniCallback(JNIEnv * env, jobject object, jint billingResponseCode);
+    static void connectedChangedHelperJniCallback(JNIEnv * env, jobject object, jboolean connected);
+    static void productRegisteredJniCallback(JNIEnv * env, jobject object, jstring productJson);
+    static void productRegistrationFailedJniCallback(JNIEnv * env, jobject object, jstring productId, jint billingResponseCode);
+    static void purchaseSucceededJniCallback(JNIEnv * env, jobject object, jstring purchaseJson);
+    static void purchasePendingJniCallback(JNIEnv * env, jobject object, jstring purchaseJson);
+    static void purchaseRestoredJniCallback(JNIEnv * env, jobject object, jstring purchaseJson);
+    static void purchaseFailedJniCallback(JNIEnv * env, jobject object, jstring productId, jint billingResponseCode);
+    static void purchaseConsumedJniCallback(JNIEnv * env, jobject object, jstring purchaseJson);
+    static void restorePurchasesSucceededJniCallback(JNIEnv * env, jobject object, jint count);
+    static void restorePurchasesFailedJniCallback(JNIEnv * env, jobject object, jint billingResponseCode);
 
     void startConnection() override;
     void registerProduct(AbstractProduct * product) override;

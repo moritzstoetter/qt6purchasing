@@ -38,18 +38,18 @@ GooglePlayStoreBackend::GooglePlayStoreBackend(QObject * parent) : AbstractStore
     );
 
     JNINativeMethod methods[] {
-        {"debugMessage", "(Ljava/lang/String;)V", reinterpret_cast<void *>(debugMessage)},
-        {"billingResponseReceived", "(I)V", reinterpret_cast<void *>(billingResponseReceived)},
-        {"connectedChangedHelper", "(Z)V", reinterpret_cast<void *>(connectedChangedHelper)},
-        {"productRegistered", "(Ljava/lang/String;)V", reinterpret_cast<void *>(productRegistered)},
-        {"productRegistrationFailed", "(Ljava/lang/String;I)V", reinterpret_cast<void *>(productRegistrationFailed)},
-        {"purchaseSucceeded", "(Ljava/lang/String;)V", reinterpret_cast<void *>(purchaseSucceeded)},
-        {"purchasePending", "(Ljava/lang/String;)V", reinterpret_cast<void *>(purchasePending)},
-        {"purchaseRestored", "(Ljava/lang/String;)V", reinterpret_cast<void *>(purchaseRestored)},
-        {"purchaseFailed", "(Ljava/lang/String;I)V", reinterpret_cast<void *>(purchaseFailed)},
-        {"purchaseConsumed", "(Ljava/lang/String;)V", reinterpret_cast<void *>(purchaseConsumed)},
-        {"restorePurchasesSucceeded", "(I)V", reinterpret_cast<void *>(restorePurchasesSucceeded)},
-        {"restorePurchasesFailed", "(I)V", reinterpret_cast<void *>(restorePurchasesFailed)},
+        {"debugMessage", "(Ljava/lang/String;)V", reinterpret_cast<void *>(debugMessageJniCallback)},
+        {"billingResponseReceived", "(I)V", reinterpret_cast<void *>(billingResponseReceivedJniCallback)},
+        {"connectedChangedHelper", "(Z)V", reinterpret_cast<void *>(connectedChangedHelperJniCallback)},
+        {"productRegistered", "(Ljava/lang/String;)V", reinterpret_cast<void *>(productRegisteredJniCallback)},
+        {"productRegistrationFailed", "(Ljava/lang/String;I)V", reinterpret_cast<void *>(productRegistrationFailedJniCallback)},
+        {"purchaseSucceeded", "(Ljava/lang/String;)V", reinterpret_cast<void *>(purchaseSucceededJniCallback)},
+        {"purchasePending", "(Ljava/lang/String;)V", reinterpret_cast<void *>(purchasePendingJniCallback)},
+        {"purchaseRestored", "(Ljava/lang/String;)V", reinterpret_cast<void *>(purchaseRestoredJniCallback)},
+        {"purchaseFailed", "(Ljava/lang/String;I)V", reinterpret_cast<void *>(purchaseFailedJniCallback)},
+        {"purchaseConsumed", "(Ljava/lang/String;)V", reinterpret_cast<void *>(purchaseConsumedJniCallback)},
+        {"restorePurchasesSucceeded", "(I)V", reinterpret_cast<void *>(restorePurchasesSucceededJniCallback)},
+        {"restorePurchasesFailed", "(I)V", reinterpret_cast<void *>(restorePurchasesFailedJniCallback)},
     };
     QJniEnvironment env;
     jclass objectClass = env->GetObjectClass(_googlePlayBillingJavaClass->object<jobject>());
@@ -70,19 +70,19 @@ GooglePlayStoreBackend::~GooglePlayStoreBackend()
     delete _googlePlayBillingJavaClass;
 }
 
-/*static*/ void GooglePlayStoreBackend::debugMessage(JNIEnv * env, jobject object, jstring message)
+/*static*/ void GooglePlayStoreBackend::debugMessageJniCallback(JNIEnv * env, jobject object, jstring message)
 {
     const char * messageCStr = env->GetStringUTFChars(message, nullptr);
     qDebug() << messageCStr;
     env->ReleaseStringUTFChars(message, messageCStr);
 }
 
-/*static*/ void GooglePlayStoreBackend::billingResponseReceived(JNIEnv * env, jobject object, jint value)
+/*static*/ void GooglePlayStoreBackend::billingResponseReceivedJniCallback(JNIEnv * env, jobject object, jint value)
 {
     qDebug() << "Billing response received:" << static_cast<GooglePlayStoreBackend::BillingResponseCode>(value);
 }
 
-/*static*/ void GooglePlayStoreBackend::connectedChangedHelper(JNIEnv * env, jobject object, jboolean connected)
+/*static*/ void GooglePlayStoreBackend::connectedChangedHelperJniCallback(JNIEnv * env, jobject object, jboolean connected)
 {
     GooglePlayStoreBackend * backend = GooglePlayStoreBackend::s_currentInstance;
     if (!backend) {
@@ -105,7 +105,7 @@ void GooglePlayStoreBackend::registerProduct(AbstractProduct * product)
     );
 }
 
-/*static*/ void GooglePlayStoreBackend::productRegistered(JNIEnv * env, jobject object, jstring message)
+/*static*/ void GooglePlayStoreBackend::productRegisteredJniCallback(JNIEnv * env, jobject object, jstring message)
 {
     GooglePlayStoreBackend * backend = GooglePlayStoreBackend::s_currentInstance;
     if (!backend) {
@@ -133,7 +133,7 @@ void GooglePlayStoreBackend::registerProduct(AbstractProduct * product)
     }
 }
 
-/*static*/ void GooglePlayStoreBackend::productRegistrationFailed(
+/*static*/ void GooglePlayStoreBackend::productRegistrationFailedJniCallback(
     JNIEnv * env, jobject object, jstring productId, jint billingResponseCode
 )
 {
@@ -210,7 +210,7 @@ bool GooglePlayStoreBackend::canMakePurchases() const
     return isConnected();
 }
 
-/*static*/ void GooglePlayStoreBackend::purchaseSucceeded(JNIEnv * env, jobject object, jstring message)
+/*static*/ void GooglePlayStoreBackend::purchaseSucceededJniCallback(JNIEnv * env, jobject object, jstring message)
 {
     GooglePlayStoreBackend * backend = GooglePlayStoreBackend::s_currentInstance;
     if (!backend) {
@@ -232,7 +232,7 @@ bool GooglePlayStoreBackend::canMakePurchases() const
     emit backend->purchaseSucceeded(transaction);
 }
 
-/*static*/ void GooglePlayStoreBackend::purchasePending(JNIEnv * env, jobject object, jstring message)
+/*static*/ void GooglePlayStoreBackend::purchasePendingJniCallback(JNIEnv * env, jobject object, jstring message)
 {
     GooglePlayStoreBackend * backend = GooglePlayStoreBackend::s_currentInstance;
     if (!backend) {
@@ -263,7 +263,7 @@ bool GooglePlayStoreBackend::canMakePurchases() const
     }
 }
 
-/*static*/ void GooglePlayStoreBackend::purchaseRestored(JNIEnv * env, jobject object, jstring message)
+/*static*/ void GooglePlayStoreBackend::purchaseRestoredJniCallback(JNIEnv * env, jobject object, jstring message)
 {
     GooglePlayStoreBackend * backend = GooglePlayStoreBackend::s_currentInstance;
     if (!backend) {
@@ -285,8 +285,7 @@ bool GooglePlayStoreBackend::canMakePurchases() const
     emit backend->purchaseRestored(transaction);
 }
 
-/*static*/ void
-GooglePlayStoreBackend::purchaseFailed(JNIEnv * env, jobject object, jstring productId, jint billingResponseCode)
+/*static*/ void GooglePlayStoreBackend::purchaseFailedJniCallback(JNIEnv * env, jobject object, jstring productId, jint billingResponseCode)
 {
     GooglePlayStoreBackend * backend = GooglePlayStoreBackend::s_currentInstance;
     if (!backend) {
@@ -303,7 +302,7 @@ GooglePlayStoreBackend::purchaseFailed(JNIEnv * env, jobject object, jstring pro
     emit backend->purchaseFailed(prodId, static_cast<int>(error), billingResponseCode, message);
 }
 
-/*static*/ void GooglePlayStoreBackend::purchaseConsumed(JNIEnv * env, jobject object, jstring message)
+/*static*/ void GooglePlayStoreBackend::purchaseConsumedJniCallback(JNIEnv * env, jobject object, jstring message)
 {
     GooglePlayStoreBackend * backend = GooglePlayStoreBackend::s_currentInstance;
     if (!backend) {
@@ -319,7 +318,7 @@ GooglePlayStoreBackend::purchaseFailed(JNIEnv * env, jobject object, jstring pro
     emit backend->consumePurchaseSucceeded(transaction);
 }
 
-/*static*/ void GooglePlayStoreBackend::restorePurchasesSucceeded(JNIEnv * env, jobject object, jint count)
+/*static*/ void GooglePlayStoreBackend::restorePurchasesSucceededJniCallback(JNIEnv * env, jobject object, jint count)
 {
     GooglePlayStoreBackend * backend = GooglePlayStoreBackend::s_currentInstance;
     if (!backend) {
@@ -331,7 +330,7 @@ GooglePlayStoreBackend::purchaseFailed(JNIEnv * env, jobject object, jstring pro
     emit backend->restorePurchasesSucceeded(count);
 }
 
-/*static*/ void GooglePlayStoreBackend::restorePurchasesFailed(JNIEnv * env, jobject object, jint billingResponseCode)
+/*static*/ void GooglePlayStoreBackend::restorePurchasesFailedJniCallback(JNIEnv * env, jobject object, jint billingResponseCode)
 {
     GooglePlayStoreBackend * backend = GooglePlayStoreBackend::s_currentInstance;
     if (!backend) {
