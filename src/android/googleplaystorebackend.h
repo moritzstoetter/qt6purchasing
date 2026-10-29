@@ -36,7 +36,8 @@ public:
     static void billingResponseReceivedJniCallback(JNIEnv * env, jobject object, jint billingResponseCode);
     static void connectedChangedHelperJniCallback(JNIEnv * env, jobject object, jboolean connected);
     static void productRegisteredJniCallback(JNIEnv * env, jobject object, jstring productJson);
-    static void productRegistrationFailedJniCallback(JNIEnv * env, jobject object, jstring productId, jint billingResponseCode);
+    static void
+    productRegistrationFailedJniCallback(JNIEnv * env, jobject object, jstring productId, jint billingResponseCode);
     static void purchaseSucceededJniCallback(JNIEnv * env, jobject object, jstring purchaseJson);
     static void purchasePendingJniCallback(JNIEnv * env, jobject object, jstring purchaseJson);
     static void purchaseRestoredJniCallback(JNIEnv * env, jobject object, jstring purchaseJson);

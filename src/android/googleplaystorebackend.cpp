@@ -42,7 +42,9 @@ GooglePlayStoreBackend::GooglePlayStoreBackend(QObject * parent) : AbstractStore
         {"billingResponseReceived", "(I)V", reinterpret_cast<void *>(billingResponseReceivedJniCallback)},
         {"connectedChangedHelper", "(Z)V", reinterpret_cast<void *>(connectedChangedHelperJniCallback)},
         {"productRegistered", "(Ljava/lang/String;)V", reinterpret_cast<void *>(productRegisteredJniCallback)},
-        {"productRegistrationFailed", "(Ljava/lang/String;I)V", reinterpret_cast<void *>(productRegistrationFailedJniCallback)},
+        {"productRegistrationFailed",
+         "(Ljava/lang/String;I)V",
+         reinterpret_cast<void *>(productRegistrationFailedJniCallback)},
         {"purchaseSucceeded", "(Ljava/lang/String;)V", reinterpret_cast<void *>(purchaseSucceededJniCallback)},
         {"purchasePending", "(Ljava/lang/String;)V", reinterpret_cast<void *>(purchasePendingJniCallback)},
         {"purchaseRestored", "(Ljava/lang/String;)V", reinterpret_cast<void *>(purchaseRestoredJniCallback)},
@@ -82,7 +84,8 @@ GooglePlayStoreBackend::~GooglePlayStoreBackend()
     qDebug() << "Billing response received:" << static_cast<GooglePlayStoreBackend::BillingResponseCode>(value);
 }
 
-/*static*/ void GooglePlayStoreBackend::connectedChangedHelperJniCallback(JNIEnv * env, jobject object, jboolean connected)
+/*static*/ void
+GooglePlayStoreBackend::connectedChangedHelperJniCallback(JNIEnv * env, jobject object, jboolean connected)
 {
     GooglePlayStoreBackend * backend = GooglePlayStoreBackend::s_currentInstance;
     if (!backend) {
@@ -285,7 +288,9 @@ bool GooglePlayStoreBackend::canMakePurchases() const
     emit backend->purchaseRestored(transaction);
 }
 
-/*static*/ void GooglePlayStoreBackend::purchaseFailedJniCallback(JNIEnv * env, jobject object, jstring productId, jint billingResponseCode)
+/*static*/ void GooglePlayStoreBackend::purchaseFailedJniCallback(
+    JNIEnv * env, jobject object, jstring productId, jint billingResponseCode
+)
 {
     GooglePlayStoreBackend * backend = GooglePlayStoreBackend::s_currentInstance;
     if (!backend) {
@@ -330,7 +335,8 @@ bool GooglePlayStoreBackend::canMakePurchases() const
     emit backend->restorePurchasesSucceeded(count);
 }
 
-/*static*/ void GooglePlayStoreBackend::restorePurchasesFailedJniCallback(JNIEnv * env, jobject object, jint billingResponseCode)
+/*static*/ void
+GooglePlayStoreBackend::restorePurchasesFailedJniCallback(JNIEnv * env, jobject object, jint billingResponseCode)
 {
     GooglePlayStoreBackend * backend = GooglePlayStoreBackend::s_currentInstance;
     if (!backend) {
