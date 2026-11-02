@@ -240,6 +240,8 @@ public class GooglePlayBilling {
             public void onConsumeResponse (BillingResult billingResult, String purchaseToken) {
                 if (billingResult.getResponseCode() == BillingResponseCode.OK) {
                     purchaseConsumed(jsonPurchaseString);
+                } else {
+                    purchaseFinalizeFailed(jsonPurchaseString, billingResult.getResponseCode());
                 }
             }
         };
@@ -255,7 +257,7 @@ public class GooglePlayBilling {
             billingClient.consumeAsync(consumeParams, listener);
 
         } catch (JSONException e) {
-            throw new RuntimeException(e);
+            purchaseFinalizeFailed(jsonPurchaseString, BillingResponseCode.DEVELOPER_ERROR);
         }
     }
 
