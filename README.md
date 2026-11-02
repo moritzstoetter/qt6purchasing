@@ -104,8 +104,7 @@ To add In-App-Purchasing capabilities to your Qt6/QML project follow the steps b
   ```sh
   git clone https://github.com/moritzstoetter/qt6purchasing.git
   ```
-2. Copy 'android/GooglePlayBilling.java' to `QT_ANDROID_PACKAGE_SOURCE_DIR/src/com/COMPANY_NAME/APP_NAME/GooglePlayBilling.java`
-  For more information on how to include custom Java-Code in your Android App see [Deploying an Application on Android](https://doc.qt.io/qt-6/deployment-android.html).
+2. For Android, set up your app's Android package as described in [Android/Google Play Setup](#androidgoogle-play-setup).
 3. Add the qt6purchasing library's QML plugin to your project. In your project's `CMakeLists.txt` add the following:
    1. Ensure your project applies Qt 6.8 policies.
       ```cmake
@@ -115,7 +114,11 @@ To add In-App-Purchasing capabilities to your Qt6/QML project follow the steps b
       ```
 	  set(QT_QML_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
       ```
-   3. Link your app target to this library's QML module.
+   3. Add this library to your build, using the folder you cloned it into.
+      ```cmake
+      add_subdirectory(qt6purchasing/src)
+      ```
+   4. Link your app target to this library's QML module.
       ```cmake
       target_link_libraries(APP_TARGET
           PRIVATE
@@ -123,6 +126,26 @@ To add In-App-Purchasing capabilities to your Qt6/QML project follow the steps b
               qt6purchasinglibplugin
       )
       ```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+## Android/Google Play Setup
+
+### Java Helper Class
+
+The Android backend uses a Java class, `GooglePlayBilling`, which has to be compiled into your app. It is at `src/android/GooglePlayBilling.java` in this repo, in the package `io.github.moritzstoetter.qt6purchasing`.
+
+The simplest way to include it is to let the library add it. After `add_subdirectory()`, call this instead of setting `QT_ANDROID_PACKAGE_SOURCE_DIR` yourself:
+
+```cmake
+qt6purchasing_set_android_package_source_dir(APP_TARGET android)
+```
+
+`android` is your app's own Android folder (`AndroidManifest.xml`, `build.gradle`, `res/` and so on), relative to the `CMakeLists.txt` that calls the function. When CMake configures, the function copies that folder into the build directory, adds `GooglePlayBilling.java`, and sets `QT_ANDROID_PACKAGE_SOURCE_DIR` to the copy. It does nothing on other platforms, so it can be called unconditionally.
+
+To copy the file by hand instead, put it at `src/io/github/moritzstoetter/qt6purchasing/GooglePlayBilling.java` inside your Android package source directory, and copy it again whenever you update this library. Don't change its `package` line, because the library looks up the class by that name.
+
+For more on custom Java code in a Qt Android app, see [Deploying an Application on Android](https://doc.qt.io/qt-6/deployment-android.html).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
