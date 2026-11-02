@@ -74,8 +74,12 @@ public class GooglePlayBilling {
                     int count = 0;
                     if (purchases != null && !purchases.isEmpty()) {
                         for (Purchase purchase : purchases) {
-                            purchaseRestored(purchaseJson(purchase));
-                            count++;
+                            if (purchase.getPurchaseState() == Purchase.PurchaseState.PENDING) {
+                                purchasePending(purchaseJson(purchase));
+                            } else if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
+                                purchaseRestored(purchaseJson(purchase));
+                                count++;
+                            }
                         }
                     }
                     restorePurchasesSucceeded(count);
