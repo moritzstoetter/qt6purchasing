@@ -221,8 +221,14 @@ public class GooglePlayBilling {
                         .setProductDetailsParamsList(productParamsList)
                         .build();
 
-                    pendingProductId = productId;
-                    billingClient.launchBillingFlow(activity, billingFlowParams);
+                    activity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            pendingProductId = productId;
+                            // A failed launch is also delivered to onPurchasesUpdated(), which reports it
+                            billingClient.launchBillingFlow(activity, billingFlowParams);
+                        }
+                    });
                 }
             });
     };
