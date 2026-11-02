@@ -87,6 +87,7 @@ public class GooglePlayBilling {
         billingClient = BillingClient.newBuilder(this.context)
                 .setListener(purchasesUpdatedListener)
                 .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
+                .enableAutoServiceReconnection()
                 .build();
     }
 
@@ -159,9 +160,7 @@ public class GooglePlayBilling {
             }
             @Override
             public void onBillingServiceDisconnected() {
-                // Try to restart the connection on the next request to
-                // Google Play by calling the startConnection() method.
-                connectedChangedHelper(false);
+                debugMessage("Billing service disconnected; it reconnects on the next request");
             }
         });
     };
