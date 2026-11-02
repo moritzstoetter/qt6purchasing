@@ -95,7 +95,7 @@ To add In-App-Purchasing capabilities to your Qt6/QML project follow the steps b
 
 * Qt/QML 6 (6.8 or higher)
 * Apple StoreKit (iOS)
-* Android Billing Client (Android)
+* Google Play Billing Library 8.0 or later (Android)
 * Windows SDK with WinRT support (Windows)
 
 ### Installation
@@ -146,6 +146,27 @@ qt6purchasing_set_android_package_source_dir(APP_TARGET android)
 To copy the file by hand instead, put it at `src/io/github/moritzstoetter/qt6purchasing/GooglePlayBilling.java` inside your Android package source directory, and copy it again whenever you update this library. Don't change its `package` line, because the library looks up the class by that name.
 
 For more on custom Java code in a Qt Android app, see [Deploying an Application on Android](https://doc.qt.io/qt-6/deployment-android.html).
+
+### Google Play Billing Library
+
+The Java class needs the [Google Play Billing Library](https://developer.android.com/google/play/billing/integrate), version 8.0 or later. Add it to the `dependencies` block of the `build.gradle` in your app's Android folder:
+
+```gradle
+implementation 'com.android.billingclient:billing:9.1.0'
+```
+
+If your Android folder has no `build.gradle` yet, start from the one in Qt's Android templates, at `src/android/templates/build.gradle` in your Qt for Android kit. Google Play stops accepting new apps and updates built with older Billing Library versions. Its [deprecation timeline](https://developer.android.com/google/play/billing/deprecation-faq) lists the dates.
+
+With Qt 6.8, the build then fails with "Duplicate class kotlin…". The Billing Library's dependencies bring in the older `kotlin-stdlib-jdk7` and `kotlin-stdlib-jdk8` modules. Their classes are already part of `kotlin-stdlib` 1.8, which Qt 6.8's template brings in. Exclude the older modules in the same `build.gradle`:
+
+```gradle
+configurations.all {
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+}
+```
+
+Qt 6.12 doesn't need this.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
