@@ -79,6 +79,8 @@ GooglePlayStoreBackend::~GooglePlayStoreBackend()
     if (s_currentInstance == this)
         s_currentInstance = nullptr;
 
+    if (_googlePlayBillingJavaClass)
+        _googlePlayBillingJavaClass->callMethod<void>("endConnection");
     delete _googlePlayBillingJavaClass;
 }
 

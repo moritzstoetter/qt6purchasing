@@ -261,4 +261,8 @@ public class GooglePlayBilling {
         debugMessage("Manual restore purchases triggered - calling queryPurchasesAsync");
         queryPurchases();
     }
+
+    public void endConnection() {
+        billingClient.endConnection();
+    }
 }
