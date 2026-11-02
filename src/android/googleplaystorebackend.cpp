@@ -27,15 +27,25 @@ static QJsonObject transactionToJson(Transaction transaction)
     return json;
 }
 
+static constexpr char googlePlayBillingClassName[] = "io/github/moritzstoetter/qt6purchasing/GooglePlayBilling";
+
 GooglePlayStoreBackend * GooglePlayStoreBackend::s_currentInstance = nullptr;
 
 GooglePlayStoreBackend::GooglePlayStoreBackend(QObject * parent) : AbstractStoreBackend(parent)
 {
     _googlePlayBillingJavaClass = new QJniObject(
-        "com/climbsmart/crimptronic/GooglePlayBilling",
+        googlePlayBillingClassName,
         "(Landroid/content/Context;)V",
         QNativeInterface::QAndroidApplication::context().object()
     );
+    if (!_googlePlayBillingJavaClass->isValid()) {
+        qCritical() << "Google Play billing unavailable: cannot create Java class" << googlePlayBillingClassName
+                    << "- GooglePlayBilling.java must be in the app's Android package source directory,"
+                    << "with its package line unchanged";
+        delete _googlePlayBillingJavaClass;
+        _googlePlayBillingJavaClass = nullptr;
+        return;
+    }
 
     JNINativeMethod methods[] {
         {"debugMessage", "(Ljava/lang/String;)V", reinterpret_cast<void *>(debugMessageJniCallback)},
@@ -98,11 +108,17 @@ GooglePlayStoreBackend::connectedChangedHelperJniCallback(JNIEnv * env, jobject 
 
 void GooglePlayStoreBackend::startConnection()
 {
+    if (!_googlePlayBillingJavaClass)
+        return;
+
     _googlePlayBillingJavaClass->callMethod<void>("startConnection");
 }
 
 void GooglePlayStoreBackend::registerProduct(AbstractProduct * product)
 {
+    if (!_googlePlayBillingJavaClass)
+        return;
+
     _googlePlayBillingJavaClass->callMethod<void>(
         "registerProduct", "(Ljava/lang/String;)V", QJniObject::fromString(product->identifier()).object<jstring>()
     );
@@ -161,6 +177,16 @@ void GooglePlayStoreBackend::registerProduct(AbstractProduct * product)
 
 void GooglePlayStoreBackend::purchaseProduct(AbstractProduct * product)
 {
+    if (!_googlePlayBillingJavaClass) {
+        emit purchaseFailed(
+            product->identifier(),
+            static_cast<int>(PurchaseError::ServiceUnavailable),
+            0,
+            "Google Play billing unavailable"
+        );
+        return;
+    }
+
     QByteArray jsonSkuDetails = QJsonDocument(reinterpret_cast<GooglePlayStoreProduct *>(product)->json()).toJson();
 
     _googlePlayBillingJavaClass->callMethod<void>(
@@ -175,6 +201,11 @@ void GooglePlayStoreBackend::consumePurchase(Transaction transaction)
 {
     qDebug() << "Android consumePurchase called for:" << transaction.orderId
              << "purchaseToken:" << transaction.purchaseToken;
+
+    if (!_googlePlayBillingJavaClass) {
+        emit consumePurchaseFailed(transaction);
+        return;
+    }
 
     // Only call consumeAsync for Consumable products
     AbstractProduct * product = this->product(transaction.productId);
@@ -203,6 +234,13 @@ void GooglePlayStoreBackend::consumePurchase(Transaction transaction)
 
 void GooglePlayStoreBackend::restorePurchasesImpl()
 {
+    if (!_googlePlayBillingJavaClass) {
+        emit restorePurchasesFailed(
+            static_cast<int>(PurchaseError::ServiceUnavailable), 0, "Google Play billing unavailable"
+        );
+        return;
+    }
+
     qDebug() << "Android restorePurchasesImpl() called - triggering manual queryPurchasesAsync";
     _googlePlayBillingJavaClass->callMethod<void>("queryExistingPurchases");
 }

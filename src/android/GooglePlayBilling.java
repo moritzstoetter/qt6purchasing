@@ -1,4 +1,4 @@
-package com.climbsmart.crimptronic;
+package io.github.moritzstoetter.qt6purchasing;
 
 import android.app.Activity;
 import android.content.Context;
