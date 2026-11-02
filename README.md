@@ -95,7 +95,7 @@ To add In-App-Purchasing capabilities to your Qt6/QML project follow the steps b
 
 * Qt/QML 6 (6.8 or higher)
 * Apple StoreKit (iOS)
-* Android Billing Client (Android)
+* Google Play Billing Library 8.0 or later (Android)
 * Windows SDK with WinRT support (Windows)
 
 ### Installation
@@ -104,8 +104,7 @@ To add In-App-Purchasing capabilities to your Qt6/QML project follow the steps b
   ```sh
   git clone https://github.com/moritzstoetter/qt6purchasing.git
   ```
-2. Copy 'android/GooglePlayBilling.java' to `QT_ANDROID_PACKAGE_SOURCE_DIR/src/com/COMPANY_NAME/APP_NAME/GooglePlayBilling.java`
-  For more information on how to include custom Java-Code in your Android App see [Deploying an Application on Android](https://doc.qt.io/qt-6/deployment-android.html).
+2. For Android, set up your app's Android package as described in [Android/Google Play Setup](#androidgoogle-play-setup).
 3. Add the qt6purchasing library's QML plugin to your project. In your project's `CMakeLists.txt` add the following:
    1. Ensure your project applies Qt 6.8 policies.
       ```cmake
@@ -115,7 +114,11 @@ To add In-App-Purchasing capabilities to your Qt6/QML project follow the steps b
       ```
 	  set(QT_QML_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
       ```
-   3. Link your app target to this library's QML module.
+   3. Add this library to your build, using the folder you cloned it into.
+      ```cmake
+      add_subdirectory(qt6purchasing/src)
+      ```
+   4. Link your app target to this library's QML module.
       ```cmake
       target_link_libraries(APP_TARGET
           PRIVATE
@@ -123,6 +126,47 @@ To add In-App-Purchasing capabilities to your Qt6/QML project follow the steps b
               qt6purchasinglibplugin
       )
       ```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+## Android/Google Play Setup
+
+### Java Helper Class
+
+The Android backend uses a Java class, `GooglePlayBilling`, which has to be compiled into your app. It is at `src/android/GooglePlayBilling.java` in this repo, in the package `io.github.moritzstoetter.qt6purchasing`.
+
+The simplest way to include it is to let the library add it. After `add_subdirectory()`, call this instead of setting `QT_ANDROID_PACKAGE_SOURCE_DIR` yourself:
+
+```cmake
+qt6purchasing_set_android_package_source_dir(APP_TARGET android)
+```
+
+`android` is your app's own Android folder (`AndroidManifest.xml`, `build.gradle`, `res/` and so on), relative to the `CMakeLists.txt` that calls the function. When CMake configures, the function copies that folder into the build directory, adds `GooglePlayBilling.java`, and sets `QT_ANDROID_PACKAGE_SOURCE_DIR` to the copy. It does nothing on other platforms, so it can be called unconditionally.
+
+To copy the file by hand instead, put it at `src/io/github/moritzstoetter/qt6purchasing/GooglePlayBilling.java` inside your Android package source directory, and copy it again whenever you update this library. Don't change its `package` line, because the library looks up the class by that name.
+
+For more on custom Java code in a Qt Android app, see [Deploying an Application on Android](https://doc.qt.io/qt-6/deployment-android.html).
+
+### Google Play Billing Library
+
+The Java class needs the [Google Play Billing Library](https://developer.android.com/google/play/billing/integrate), version 8.0 or later. Add it to the `dependencies` block of the `build.gradle` in your app's Android folder:
+
+```gradle
+implementation 'com.android.billingclient:billing:9.1.0'
+```
+
+If your Android folder has no `build.gradle` yet, start from the one in Qt's Android templates, at `src/android/templates/build.gradle` in your Qt for Android kit. Google Play stops accepting new apps and updates built with older Billing Library versions. Its [deprecation timeline](https://developer.android.com/google/play/billing/deprecation-faq) lists the dates.
+
+With Qt 6.8, the build then fails with "Duplicate class kotlin…". The Billing Library's dependencies bring in the older `kotlin-stdlib-jdk7` and `kotlin-stdlib-jdk8` modules. Their classes are already part of `kotlin-stdlib` 1.8, which Qt 6.8's template brings in. Exclude the older modules in the same `build.gradle`:
+
+```gradle
+configurations.all {
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+}
+```
+
+Qt 6.12 doesn't need this.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

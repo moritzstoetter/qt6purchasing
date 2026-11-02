@@ -119,3 +119,33 @@ target_link_libraries(qt6purchasinglib
         Qt6::Qml
         ${PLATFORM_LIBS}
 )
+
+# Set <target>'s QT_ANDROID_PACKAGE_SOURCE_DIR to a copy of <source_dir> with GooglePlayBilling.java added
+function(qt6purchasing_set_android_package_source_dir target source_dir)
+    if(NOT ANDROID)
+        return()
+    endif()
+
+    get_filename_component(source_dir "${source_dir}" ABSOLUTE)
+    if(NOT IS_DIRECTORY "${source_dir}")
+        message(FATAL_ERROR "qt6purchasing_set_android_package_source_dir: ${source_dir} is not a directory")
+    endif()
+
+    set(package_dir "${CMAKE_CURRENT_BINARY_DIR}/qt6purchasing-android-package-${target}")
+
+    file(REMOVE_RECURSE "${package_dir}")
+
+    # Rerun CMake when a file in source_dir is edited, added or removed
+    file(GLOB_RECURSE app_files CONFIGURE_DEPENDS RELATIVE "${source_dir}" "${source_dir}/*")
+    foreach(app_file IN LISTS app_files)
+        configure_file("${source_dir}/${app_file}" "${package_dir}/${app_file}" COPYONLY)
+    endforeach()
+
+    configure_file(
+        "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/android/GooglePlayBilling.java"
+        "${package_dir}/src/io/github/moritzstoetter/qt6purchasing/GooglePlayBilling.java"
+        COPYONLY
+    )
+
+    set_target_properties(${target} PROPERTIES QT_ANDROID_PACKAGE_SOURCE_DIR "${package_dir}")
+endfunction()

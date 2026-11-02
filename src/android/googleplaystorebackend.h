@@ -43,6 +43,9 @@ public:
     static void purchaseRestoredJniCallback(JNIEnv * env, jobject object, jstring purchaseJson);
     static void purchaseFailedJniCallback(JNIEnv * env, jobject object, jstring productId, jint billingResponseCode);
     static void purchaseConsumedJniCallback(JNIEnv * env, jobject object, jstring purchaseJson);
+    static void purchaseAcknowledgedJniCallback(JNIEnv * env, jobject object, jstring purchaseJson);
+    static void
+    purchaseFinalizeFailedJniCallback(JNIEnv * env, jobject object, jstring purchaseJson, jint billingResponseCode);
     static void restorePurchasesSucceededJniCallback(JNIEnv * env, jobject object, jint count);
     static void restorePurchasesFailedJniCallback(JNIEnv * env, jobject object, jint billingResponseCode);
 
