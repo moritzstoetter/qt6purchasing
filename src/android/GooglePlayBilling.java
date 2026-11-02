@@ -25,6 +25,8 @@ public class GooglePlayBilling {
     private static native void purchaseRestored(String purchaseJson);
     private static native void purchaseFailed(String productId, int billingResponseCode);
     private static native void purchaseConsumed(String purchaseJson);
+    private static native void purchaseAcknowledged(String purchaseJson);
+    private static native void purchaseFinalizeFailed(String purchaseJson, int billingResponseCode);
     private static native void restorePurchasesSucceeded(int count);
     private static native void restorePurchasesFailed(int billingResponseCode);
 
@@ -255,6 +257,49 @@ public class GooglePlayBilling {
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void acknowledgePurchase(final String jsonPurchaseString) {
+        final String purchaseToken;
+        try {
+            purchaseToken = new JSONObject(jsonPurchaseString).getString("purchaseToken");
+        } catch (JSONException e) {
+            purchaseFinalizeFailed(jsonPurchaseString, BillingResponseCode.DEVELOPER_ERROR);
+            return;
+        }
+
+        QueryPurchasesParams params = QueryPurchasesParams.newBuilder()
+            .setProductType(ProductType.INAPP)
+            .build();
+        billingClient.queryPurchasesAsync(params, new PurchasesResponseListener() {
+            @Override
+            public void onQueryPurchasesResponse(BillingResult billingResult, List<Purchase> purchases) {
+                if (billingResult.getResponseCode() == BillingResponseCode.OK && purchases != null) {
+                    for (Purchase purchase : purchases) {
+                        if (purchase.getPurchaseToken().equals(purchaseToken) && purchase.isAcknowledged()) {
+                            purchaseAcknowledged(jsonPurchaseString);
+                            return;
+                        }
+                    }
+                }
+                sendAcknowledgement(jsonPurchaseString, purchaseToken);
+            }
+        });
+    }
+
+    private void sendAcknowledgement(final String jsonPurchaseString, String purchaseToken) {
+        AcknowledgePurchaseParams params = AcknowledgePurchaseParams.newBuilder()
+            .setPurchaseToken(purchaseToken)
+            .build();
+        billingClient.acknowledgePurchase(params, new AcknowledgePurchaseResponseListener() {
+            @Override
+            public void onAcknowledgePurchaseResponse(BillingResult billingResult) {
+                if (billingResult.getResponseCode() == BillingResponseCode.OK)
+                    purchaseAcknowledged(jsonPurchaseString);
+                else
+                    purchaseFinalizeFailed(jsonPurchaseString, billingResult.getResponseCode());
+            }
+        });
     }
 
     public void queryExistingPurchases() {

@@ -60,6 +60,10 @@ GooglePlayStoreBackend::GooglePlayStoreBackend(QObject * parent) : AbstractStore
         {"purchaseRestored", "(Ljava/lang/String;)V", reinterpret_cast<void *>(purchaseRestoredJniCallback)},
         {"purchaseFailed", "(Ljava/lang/String;I)V", reinterpret_cast<void *>(purchaseFailedJniCallback)},
         {"purchaseConsumed", "(Ljava/lang/String;)V", reinterpret_cast<void *>(purchaseConsumedJniCallback)},
+        {"purchaseAcknowledged", "(Ljava/lang/String;)V", reinterpret_cast<void *>(purchaseAcknowledgedJniCallback)},
+        {"purchaseFinalizeFailed",
+         "(Ljava/lang/String;I)V",
+         reinterpret_cast<void *>(purchaseFinalizeFailedJniCallback)},
         {"restorePurchasesSucceeded", "(I)V", reinterpret_cast<void *>(restorePurchasesSucceededJniCallback)},
         {"restorePurchasesFailed", "(I)V", reinterpret_cast<void *>(restorePurchasesFailedJniCallback)},
     };
@@ -221,10 +225,14 @@ void GooglePlayStoreBackend::consumePurchase(Transaction transaction)
         return;
     }
 
-    // Only consumables need fulfillment
+    // Consuming acknowledges a consumable; any other purchase is acknowledged explicitly
     if (product->productType() != AbstractProduct::Consumable) {
-        qDebug() << "Product is not consumable (type:" << product->productType() << "), no fulfillment needed";
-        emit consumePurchaseSucceeded(transaction);
+        qDebug() << "Product is not consumable (type:" << product->productType() << "), acknowledging purchase";
+        _googlePlayBillingJavaClass->callMethod<void>(
+            "acknowledgePurchase",
+            "(Ljava/lang/String;)V",
+            QJniObject::fromString(QJsonDocument(transactionToJson(transaction)).toJson()).object<jstring>()
+        );
         return;
     }
 
@@ -374,6 +382,46 @@ bool GooglePlayStoreBackend::canMakePurchases() const
 
         auto transaction = transactionFromJson(json);
         emit backend->consumePurchaseSucceeded(transaction);
+    });
+}
+
+/*static*/ void GooglePlayStoreBackend::purchaseAcknowledgedJniCallback(JNIEnv * env, jobject object, jstring message)
+{
+    const char * jsonCStr = env->GetStringUTFChars(message, nullptr);
+    QJsonObject json = QJsonDocument::fromJson(jsonCStr).object();
+    env->ReleaseStringUTFChars(message, jsonCStr);
+
+    QMetaObject::invokeMethod(QCoreApplication::instance(), [json]() {
+        GooglePlayStoreBackend * backend = GooglePlayStoreBackend::s_currentInstance;
+        if (!backend) {
+            qCritical() << "Google Play purchase callback received but backend instance is null";
+            return;
+        }
+
+        auto transaction = transactionFromJson(json);
+        emit backend->consumePurchaseSucceeded(transaction);
+    });
+}
+
+/*static*/ void GooglePlayStoreBackend::purchaseFinalizeFailedJniCallback(
+    JNIEnv * env, jobject object, jstring message, jint billingResponseCode
+)
+{
+    const char * jsonCStr = env->GetStringUTFChars(message, nullptr);
+    QJsonObject json = QJsonDocument::fromJson(jsonCStr).object();
+    env->ReleaseStringUTFChars(message, jsonCStr);
+
+    QMetaObject::invokeMethod(QCoreApplication::instance(), [json, billingResponseCode]() {
+        GooglePlayStoreBackend * backend = GooglePlayStoreBackend::s_currentInstance;
+        if (!backend) {
+            qCritical() << "Google Play purchase callback received but backend instance is null";
+            return;
+        }
+
+        auto transaction = transactionFromJson(json);
+        qWarning() << "Android: finalizing purchase" << transaction.orderId
+                   << "failed with billing response code:" << billingResponseCode;
+        emit backend->consumePurchaseFailed(transaction);
     });
 }
 
