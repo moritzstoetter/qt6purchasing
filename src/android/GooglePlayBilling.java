@@ -5,8 +5,7 @@ import android.content.Context;
 
 import com.android.billingclient.api.*;
 import com.android.billingclient.api.BillingClient.BillingResponseCode;
-import com.android.billingclient.api.SkuDetailsParams.*;
-import com.android.billingclient.api.BillingClient.SkuType;
+import com.android.billingclient.api.BillingClient.ProductType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,17 +46,14 @@ public class GooglePlayBilling {
                     for (Purchase purchase : purchases) {
                         if (purchase.getPurchaseState() == Purchase.PurchaseState.PENDING) {
                             // Purchase is awaiting approval (e.g., parental approval, payment method verification)
-                            purchasePending(purchase.getOriginalJson());
+                            purchasePending(purchaseJson(purchase));
                         } else if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
                             // Purchase completed successfully
-                            purchaseSucceeded(purchase.getOriginalJson());
+                            purchaseSucceeded(purchaseJson(purchase));
                         } else {
                             // Unhandled purchase state - treat as unknown error
                             debugMessage("Unhandled purchase state: " + purchase.getPurchaseState());
-                            // Product id is available directly from the purchase
-                            List<String> skus = purchase.getSkus();
-                            String productId = !skus.isEmpty() ? skus.get(0) : "unknown";
-                            purchaseFailed(productId, BillingResponseCode.ERROR);
+                            purchaseFailed(productIdOf(purchase), BillingResponseCode.ERROR);
                         }
                     }
                 } else {
@@ -76,7 +72,7 @@ public class GooglePlayBilling {
                     int count = 0;
                     if (purchases != null && !purchases.isEmpty()) {
                         for (Purchase purchase : purchases) {
-                            purchaseRestored(purchase.getOriginalJson());
+                            purchaseRestored(purchaseJson(purchase));
                             count++;
                         }
                     }
@@ -90,8 +86,58 @@ public class GooglePlayBilling {
 
         billingClient = BillingClient.newBuilder(this.context)
                 .setListener(purchasesUpdatedListener)
-                .enablePendingPurchases()
+                .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
                 .build();
+    }
+
+    private static String productIdOf(Purchase purchase) {
+        List<String> products = purchase.getProducts();
+        return !products.isEmpty() ? products.get(0) : "unknown";
+    }
+
+    private static String purchaseJson(Purchase purchase) {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("orderId", purchase.getOrderId());
+            json.put("productId", productIdOf(purchase));
+            json.put("purchaseToken", purchase.getPurchaseToken());
+        } catch (JSONException e) {
+            debugMessage("Failed to build purchase JSON: " + e);
+        }
+        return json.toString();
+    }
+
+    private static String productJson(ProductDetails details) {
+        ProductDetails.OneTimePurchaseOfferDetails offer = details.getOneTimePurchaseOfferDetails();
+        JSONObject json = new JSONObject();
+        try {
+            json.put("productId", details.getProductId());
+            json.put("title", details.getTitle());
+            json.put("description", details.getDescription());
+            json.put("price", offer != null ? offer.getFormattedPrice() : "");
+        } catch (JSONException e) {
+            debugMessage("Failed to build product JSON: " + e);
+        }
+        return json.toString();
+    }
+
+    private void queryProductDetails(String productId, ProductDetailsResponseListener listener) {
+        List<QueryProductDetailsParams.Product> productList = new ArrayList<>();
+        productList.add(QueryProductDetailsParams.Product.newBuilder()
+            .setProductId(productId)
+            .setProductType(ProductType.INAPP)
+            .build());
+        QueryProductDetailsParams params = QueryProductDetailsParams.newBuilder()
+            .setProductList(productList)
+            .build();
+        billingClient.queryProductDetailsAsync(params, listener);
+    }
+
+    private void queryPurchases() {
+        QueryPurchasesParams params = QueryPurchasesParams.newBuilder()
+            .setProductType(ProductType.INAPP)
+            .build();
+        billingClient.queryPurchasesAsync(params, purchasesResponseListener);
     }
 
 
@@ -105,7 +151,7 @@ public class GooglePlayBilling {
                 if (billingResult.getResponseCode() ==  BillingResponseCode.OK) {
                     connectedChangedHelper(true);
                     // The BillingClient is ready. query purchases here.
-                    billingClient.queryPurchasesAsync(SkuType.INAPP, purchasesResponseListener);
+                    queryPurchases();
 
                 } else {
                     connectedChangedHelper(false);
@@ -121,15 +167,11 @@ public class GooglePlayBilling {
     };
 
     public void registerProduct(final String productId) {
-        List<String> skuList = new ArrayList<> ();
-        skuList.add(productId);
-        SkuDetailsParams.Builder params = SkuDetailsParams.newBuilder();
-        params.setSkusList(skuList).setType(SkuType.INAPP);
-        billingClient.querySkuDetailsAsync(params.build(),
-            new SkuDetailsResponseListener() {
+        queryProductDetails(productId,
+            new ProductDetailsResponseListener() {
                 @Override
-                public void onSkuDetailsResponse(BillingResult billingResult,
-                        List<SkuDetails> skuDetailsList) {
+                public void onProductDetailsResponse(BillingResult billingResult,
+                        QueryProductDetailsResult result) {
                     billingResponseReceived(billingResult.getResponseCode());
 
                     if (billingResult.getResponseCode() != BillingResponseCode.OK) {
@@ -137,32 +179,52 @@ public class GooglePlayBilling {
                         return;
                     }
 
-                    if (skuDetailsList == null || skuDetailsList.isEmpty()) {
-                        productRegistrationFailed(productId, BillingResponseCode.OK);
-                        return;
+                    for (UnfetchedProduct unfetched : result.getUnfetchedProductList()) {
+                        debugMessage("Product " + unfetched.getProductId() + " not fetched, status code: "
+                                + unfetched.getStatusCode());
+                        productRegistrationFailed(unfetched.getProductId(), BillingResponseCode.ITEM_UNAVAILABLE);
                     }
 
-                    productRegistered(skuDetailsList.get(0).getOriginalJson());
+                    for (ProductDetails details : result.getProductDetailsList()) {
+                        productRegistered(productJson(details));
+                    }
                 }
             });
     };
 
-    public void purchaseProduct(Activity activity, final String jsonSkuDetails) {
-        try {
-            // Extract and store the product ID before launching billing flow
-            JSONObject obj = new JSONObject(jsonSkuDetails);
-            pendingProductId = obj.getString("productId");
+    public void purchaseProduct(final Activity activity, final String productId) {
+        queryProductDetails(productId,
+            new ProductDetailsResponseListener() {
+                @Override
+                public void onProductDetailsResponse(BillingResult billingResult,
+                        QueryProductDetailsResult result) {
+                    if (billingResult.getResponseCode() != BillingResponseCode.OK) {
+                        purchaseFailed(productId, billingResult.getResponseCode());
+                        return;
+                    }
 
-            SkuDetails purchaseThis = new SkuDetails(jsonSkuDetails);
+                    if (result.getProductDetailsList().isEmpty()) {
+                        purchaseFailed(productId, BillingResponseCode.ITEM_UNAVAILABLE);
+                        return;
+                    }
 
-            BillingFlowParams billingFlowParams = BillingFlowParams.newBuilder()
-                .setSkuDetails(purchaseThis)
-                .build();
-            int responseCode = billingClient.launchBillingFlow(activity, billingFlowParams).getResponseCode();
-        } catch (JSONException e) {
-            pendingProductId = null;  // Clean up on error
-            throw new RuntimeException(e);
-        }
+                    ProductDetails details = result.getProductDetailsList().get(0);
+                    BillingFlowParams.ProductDetailsParams.Builder productParams =
+                        BillingFlowParams.ProductDetailsParams.newBuilder().setProductDetails(details);
+                    ProductDetails.OneTimePurchaseOfferDetails offer = details.getOneTimePurchaseOfferDetails();
+                    if (offer != null)
+                        productParams.setOfferToken(offer.getOfferToken());
+
+                    List<BillingFlowParams.ProductDetailsParams> productParamsList = new ArrayList<>();
+                    productParamsList.add(productParams.build());
+                    BillingFlowParams billingFlowParams = BillingFlowParams.newBuilder()
+                        .setProductDetailsParamsList(productParamsList)
+                        .build();
+
+                    pendingProductId = productId;
+                    billingClient.launchBillingFlow(activity, billingFlowParams);
+                }
+            });
     };
 
     public void consumePurchase(final String jsonPurchaseString) {
@@ -192,6 +254,6 @@ public class GooglePlayBilling {
 
     public void queryExistingPurchases() {
         debugMessage("Manual restore purchases triggered - calling queryPurchasesAsync");
-        billingClient.queryPurchasesAsync(SkuType.INAPP, purchasesResponseListener);
+        queryPurchases();
     }
 }

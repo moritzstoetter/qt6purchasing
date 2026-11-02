@@ -136,11 +136,9 @@ void GooglePlayStoreBackend::registerProduct(AbstractProduct * product)
     QJsonObject json = QJsonDocument::fromJson(jsonCStr).object();
     env->ReleaseStringUTFChars(message, jsonCStr);
 
-    GooglePlayStoreProduct * product =
-        reinterpret_cast<GooglePlayStoreProduct *>(backend->product(json["productId"].toString()));
+    AbstractProduct * product = backend->product(json["productId"].toString());
 
     if (product) {
-        product->setJson(json);
         product->setDescription(json["description"].toString());
         product->setPrice(json["price"].toString());
         product->setTitle(json["title"].toString());
@@ -187,13 +185,11 @@ void GooglePlayStoreBackend::purchaseProduct(AbstractProduct * product)
         return;
     }
 
-    QByteArray jsonSkuDetails = QJsonDocument(reinterpret_cast<GooglePlayStoreProduct *>(product)->json()).toJson();
-
     _googlePlayBillingJavaClass->callMethod<void>(
         "purchaseProduct",
         "(Landroid/app/Activity;Ljava/lang/String;)V",
         QNativeInterface::QAndroidApplication::context(),
-        QJniObject::fromString(jsonSkuDetails).object<jstring>()
+        QJniObject::fromString(product->identifier()).object<jstring>()
     );
 }
 
