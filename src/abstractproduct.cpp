@@ -121,26 +121,65 @@ void AbstractProduct::updateIsReadyForRegister()
     emit isReadyForRegisterChanged();
 }
 
+// Queued, so the failure arrives after purchase() returns, like every other purchase result
+static void
+queuePurchaseFailed(AbstractProduct * product, AbstractStoreBackend::PurchaseError error, const QString &message)
+{
+    QMetaObject::invokeMethod(
+        product,
+        [product, error, message]() {
+            emit product->purchaseFailed(static_cast<int>(error), 0, message);
+        },
+        Qt::QueuedConnection
+    );
+}
+
+static void queuePurchaseFailed(
+    AbstractStoreBackend * store,
+    const QString &productId,
+    AbstractStoreBackend::PurchaseError error,
+    const QString &message
+)
+{
+    QMetaObject::invokeMethod(
+        store,
+        [store, productId, error, message]() {
+            emit store->purchaseFailed(productId, static_cast<int>(error), 0, message);
+        },
+        Qt::QueuedConnection
+    );
+}
+
 void AbstractProduct::purchase()
 {
     auto * store = findStoreBackend();
     if (!store) {
         qCritical() << "Product not child of a store backend!";
-        return;
-    }
-
-    if (!store->isConnected()) {
-        qWarning() << "Cannot purchase - store not connected";
+        queuePurchaseFailed(
+            this, AbstractStoreBackend::PurchaseError::DeveloperError, "Product not child of a store backend"
+        );
         return;
     }
 
     if (_identifier.isEmpty()) {
         qWarning() << "Cannot purchase - product has no identifier";
+        queuePurchaseFailed(this, AbstractStoreBackend::PurchaseError::DeveloperError, "Product has no identifier");
+        return;
+    }
+
+    if (!store->isConnected()) {
+        qWarning() << "Cannot purchase - store not connected";
+        queuePurchaseFailed(
+            store, _identifier, AbstractStoreBackend::PurchaseError::ServiceUnavailable, "Store not connected"
+        );
         return;
     }
 
     if (_status != AbstractProduct::Registered) {
         qWarning() << "Cannot purchase unregistered product:" << _identifier;
+        queuePurchaseFailed(
+            store, _identifier, AbstractStoreBackend::PurchaseError::ItemUnavailable, "Product not registered"
+        );
         return;
     }
 
